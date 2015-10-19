@@ -11,7 +11,7 @@
         /// </summary>
         public void startWork()
         {
-            Console.WriteLine("Введите число значений в таблице:");
+            Console.WriteLine("Введите количество значений функции:");
             m = Convert.ToInt32(Console.ReadLine());
 
             // Инициализируем таблицу.
@@ -22,14 +22,14 @@
             a = double.Parse(num[0]);
             b = double.Parse(num[1]);
 
-            FillingTable();
-            PrintTable();
+            
+            //PrintTable();
 
             do
             {
                 Console.WriteLine("Введите степень многочлена (n <= m):");
                 n = Convert.ToInt32(Console.ReadLine());
-            } while (n > m && n > 0);
+            } while (n > m || n <= 0);
 
             double x;
             bool result;
@@ -41,15 +41,18 @@
 
                 if (result)
                 {
+                    FillingTable(x);
                     if (n != m)
                         Sorting(x);
+                    PrintTable();
 
-                    Console.WriteLine("Значение многочлена по Лагранжу:");
+                    Console.WriteLine("\nЗначение многочлена по Лагранжу:");
                     double calculate = CalculationOfValue(x, true);
-                    Console.WriteLine("{0:0.00}, фактическая погрешность: {1:0.00}", calculate, Math.Abs(f(x) - calculate));
+                    Console.WriteLine("{0:0.000}, фактическая погрешность: {1:0.000}", calculate, Math.Abs(f(x) - calculate));
                     calculate = CalculationOfValue(x, false);
                     Console.WriteLine("Значение многочлена по Нютону:");
-                    Console.WriteLine("{0:0.00}, фактическая погрешность: {1:0.00}", calculate, Math.Abs(f(x) - calculate));
+                    Console.WriteLine("{0:0.000}, фактическая погрешность: {1:0.000}", calculate, Math.Abs(f(x) - calculate));
+                    Console.WriteLine();
                 }
                 else if (str != "exit")
                     result = true;
@@ -58,10 +61,21 @@
             
         }
 
+        private void SwapColumn()
+        {
+            double temp = 0;
+            for (int i = 0; i < m; i++)
+            {
+                temp = table[i, 0];
+                table[i, 0] = table[i, 1];
+                table[i, 1] = temp;
+            }
+        }
+
         /// <summary>
         /// Заполняем таблицу разделённых разностей.
         /// </summary>
-        public void FillingTable()
+        public void FillingTable(double x)
         {
             for (int i = 0; i < m; i++)
             {
@@ -69,6 +83,8 @@
                 table[i, 0] = temp;
                 table[i, 1] = f(temp);
             }
+
+            Sorting(x);
 
             for (int j = 2; j < m; j++)
                 for (int i = 0; i < m - j + 1; i++)
@@ -81,9 +97,16 @@
         public void PrintTable()
         {
             for (int i = 0; i < m; i++)
-                Console.WriteLine("{0:0.00}  {1:0.00}", table[i, 0], table[i, 1]);
+                Console.WriteLine("{0:0.000}  {1:0.000}", table[i, 0], table[i, 1]);
         }
 
+        /// <summary>
+        /// Проверяем наличие введённого значения в таблицы, если нет, 
+        /// то считем занчение методами Лагранжа и Ньютона.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="choice"></param>
+        /// <returns></returns>
         private double CalculationOfValue(double x, bool choice)
         {
             for (int i = 0; i < m; i++)
@@ -167,6 +190,12 @@
             }
         }
 
+        /// <summary>
+        /// Меняем местами строки таблицы.
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="index1"></param>
+        /// <param name="index2"></param>
         private void Swap(double[,] table, int index1, int index2)
         {
             double[] tempArray = new double[m];
@@ -188,8 +217,8 @@
         /// <returns></returns>
         private double f(double x)
         {
-            //return Math.Exp(x);
-            return 1 - Math.Exp(-2 * x);
+            return x * x * x;
+            //return 1 - Math.Exp(-2 * x);
         }
 
         private int m;
