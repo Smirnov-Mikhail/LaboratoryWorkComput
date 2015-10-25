@@ -22,14 +22,14 @@
             a = double.Parse(num[0]);
             b = double.Parse(num[1]);
 
-            
-            //PrintTable();
+            FillingTable(a);
+            PrintTable();
 
             do
             {
-                Console.WriteLine("Введите степень многочлена (n <= m):");
+                Console.WriteLine("Введите степень многочлена (n < {0}):", m);
                 n = Convert.ToInt32(Console.ReadLine());
-            } while (n > m || n <= 0);
+            } while (n >= m || n <= 0);
 
             double x;
             bool result;
@@ -44,14 +44,14 @@
                     FillingTable(x);
                     if (n != m)
                         Sorting(x);
-                    PrintTable();
+                    //PrintTable();
 
                     Console.WriteLine("\nЗначение многочлена по Лагранжу:");
                     double calculate = CalculationOfValue(x, true);
-                    Console.WriteLine("{0:0.000}, фактическая погрешность: {1:0.000}", calculate, Math.Abs(f(x) - calculate));
+                    Console.WriteLine("{0}, фактическая погрешность: {1}", calculate, Math.Abs(f(x) - calculate));
                     calculate = CalculationOfValue(x, false);
                     Console.WriteLine("Значение многочлена по Нютону:");
-                    Console.WriteLine("{0:0.000}, фактическая погрешность: {1:0.000}", calculate, Math.Abs(f(x) - calculate));
+                    Console.WriteLine("{0}, фактическая погрешность: {1}", calculate, Math.Abs(f(x) - calculate));
                     Console.WriteLine();
                 }
                 else if (str != "exit")
@@ -118,6 +118,7 @@
             else
                 return Newton(x);
         }
+        
         /// <summary>
         /// Вычисляем значение многочлена, используя метод Лагранжа.
         /// </summary>
@@ -217,14 +218,14 @@
         /// <returns></returns>
         private double f(double x)
         {
-            return x * x * x;
-            //return 1 - Math.Exp(-2 * x);
+            //return x * x * x;
+            return 1 - Math.Exp(-2 * x);
         }
 
         private int m;
         private double a;
         private double b;
-        private double[,] table;// = new int[4, 2];
+        private double[,] table;
         private List<double> listOf_x = new List<double>();
         private List<double> listOfF_x = new List<double>();
         private int n;
