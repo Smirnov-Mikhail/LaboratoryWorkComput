@@ -25,14 +25,14 @@
 
             do
             {
-                Console.WriteLine("Введите степень многочлена (n <= m):");
+                Console.WriteLine("Введите степень многочлена (n < {0}):", m);
                 n = Convert.ToInt32(Console.ReadLine());
-            } while (n > m || n <= 0);
-            /*
+            } while (n >= m || n <= 0);
+            
             Console.WriteLine("Таблица численного дифференцирования.");
             FillingTable(true, table); // заполняем таблицу x_k -> f(x_k)
             FillingTablePrOIZvodnAYA(table); // заполняем таблицу производных
-            PrintProiZvodNayaTable();*/
+            PrintProiZvodNayaTable();
 
             double x;
             bool result;
@@ -50,12 +50,13 @@
                     inverseTable = new double[m, m];
                     FillingTable(false, inverseTable); // заполняем таблицу f(x_k) -> x_k
                     Sorting(x, inverseTable);
-                    PrintTable(table);
+                    //PrintTable(inverseTable);
 
                     Console.WriteLine("Результаты решения задачи обратного интерполирования.");
-                    double calculate = CalculationOfValue(x, inverseTable);
-                    Console.WriteLine("1 способ: {0:0.000}, модуль невязки: {1:0.00000}", calculate, Math.Abs(f(calculate) - x));
-                    Console.WriteLine("2 способ: {0:0.000}, модуль невязки: {1:0.00000}", WayTwo(x, a, b, table, 1), Math.Abs(f(WayTwo(x, a, b, table, 1)) - x));
+                    double calculate = CalculationOfValue(x, inverseTable, true);
+                    Console.WriteLine("1 способ: {0}, модуль невязки: {1}", calculate, Math.Abs(f(calculate) - x));
+                    calculate = CalculationOfValue(x, inverseTable, false);
+                    Console.WriteLine("2 способ: {0}, модуль невязки: {1}", calculate, Math.Abs(f(calculate) - x));
                     Console.WriteLine();
                 }
                 else if (str != "exit")
@@ -75,7 +76,7 @@
         {
             double ValueMid = Lagrange((right + left) / 2, table);
             double ValueLeft = Lagrange(left, table);
-            if (Math.Abs(ValueMid - F) <= epsilon || count == 6000)
+            if (Math.Abs(ValueMid - F) <= epsilon /*|| count == 6000*/)
                 return (right + left) / 2;
             else if ((ValueLeft - F) * (ValueMid - F) < 0)
                 return WayTwo(F, left, (right + left) / 2, table, ++count);
@@ -115,11 +116,20 @@
         /// </summary>
         public void PrintProiZvodNayaTable()
         {
+            Console.WriteLine("  x    f(x)");
             for (int i = 0; i < m; i++)
-                Console.WriteLine("{0:0.000} {1:0.000} {2:0.000} {3:0.000} {4:0.000} {5:0.000}"
-                , table[i, 0], table[i, 1] // x_k и f(x_k).
-                , table[i, 2], Math.Abs(fPrOIZvodnAYA(table[i, 0]) - table[i, 2]) // f' и погрешность.
-                , table[i, 3], Math.Abs(fPrOIZvodnAYA2(table[i, 0]) - table[i, 3])); // f'' и погрешность.
+                Console.WriteLine("{0:0.000} {1:0.000}", table[i, 0], table[i, 1]); // x_k и f(x_k).
+            Console.WriteLine("______________________________________");
+            Console.WriteLine("\tf'(x)\t\tпогрешность");
+            for (int i = 0; i < m; i++)
+                Console.WriteLine("{0} {1}", table[i, 2], Math.Abs(fPrOIZvodnAYA(table[i, 0]) - table[i, 2])); // f' и погрешность.
+            Console.WriteLine("______________________________________");
+            Console.WriteLine("\tf''(x)\t\tпогрешность");
+            for (int i = 0; i < m; i++)
+                Console.WriteLine("{0} {1}", table[i, 3], Math.Abs(fPrOIZvodnAYA2(table[i, 0]) - table[i, 3])); // f'' и погрешность.
+            Console.WriteLine("______________________________________");
+                //, table[i, 2], Math.Abs(fPrOIZvodnAYA(table[i, 0]) - table[i, 2]) // f' и погрешность.
+                //, table[i, 3], Math.Abs(fPrOIZvodnAYA2(table[i, 0]) - table[i, 3])); // f'' и погрешность.
         }
 
         /// <summary>
@@ -129,13 +139,16 @@
         /// <param name="x"></param>
         /// <param name="choice"></param>
         /// <returns></returns>
-        private double CalculationOfValue(double x, double[,] table)
+        private double CalculationOfValue(double x, double[,] table, bool choice)
         {
             for (int i = 0; i < m; i++)
                 if (table[i, 0] == x)
                     return table[i, 1];
 
-            return Lagrange(x, table);
+            if (choice)
+                return Lagrange(x, table);
+            else
+                return WayTwo(x, a, b, table, 1);
         }
 
         /// <summary>
@@ -252,7 +265,7 @@
         /// <returns></returns>
         private double Formula3(double a)
         {
-            return (f(a + h) - f(a - h)) / 2 * h;
+            return (f(a + h) - f(a - h)) / (2 * h);
         }
 
         /// <summary>
@@ -262,7 +275,7 @@
         /// <returns></returns>
         private double Formula4(double a)
         {
-            return (-3 * f(a) + 4 * f(a + h) - f(a + 2 * h)) / 2 * h;
+            return (-3 * f(a) + 4 * f(a + h) - f(a + 2 * h)) / (2 * h);
         }
 
         /// <summary>
@@ -272,7 +285,7 @@
         /// <returns></returns>
         private double Formula5(double a)
         {
-            return (3 * f(a) - 4 * f(a - h) + f(a - 2 * h)) / 2 * h;
+            return (3 * f(a) - 4 * f(a - h) + f(a - 2 * h)) / (2 * h);
         }
 
         /// <summary>
@@ -282,7 +295,7 @@
         /// <returns></returns>
         private double Formula6(double a)
         {
-            return (f(a + h) - 2 * f(a) + f(a - h)) / 2 * h;
+            return (f(a + h) - 2 * f(a) + f(a - h)) / (h * h);
         }
 
         /// <summary>
@@ -304,7 +317,7 @@
         private double fPrOIZvodnAYA(double x)
         {
             //return 3 * x * x;
-            return 1 + 2 * Math.Exp(-2 * x);
+            return 2 * Math.Exp(-2 * x);
         }
 
         /// <summary>
@@ -314,8 +327,7 @@
         /// <returns></returns>
         private double fPrOIZvodnAYA2(double x)
         {
-            //return 6 * x;
-            return 1 - 4 * Math.Exp(-2 * x);
+            return -4 * Math.Exp(-2 * x);
         }
 
         private int m;
