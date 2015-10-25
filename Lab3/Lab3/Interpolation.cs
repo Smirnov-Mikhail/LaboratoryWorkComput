@@ -25,26 +25,31 @@
 
             do
             {
-                Console.WriteLine("Введите степень многочлена (n <= m):");
+                Console.WriteLine("Введите степень многочлена (n < {0}):", m);
                 n = Convert.ToInt32(Console.ReadLine());
-            } while (n > m || n <= 0);
+            } while (n >= m || n <= 0);
+
+            FillingTable(table, true); // заполняем таблицу x_k -> f(x_k)
+            PrintTable(table);
 
             double x;
             bool result;
-            Console.WriteLine("Решение задачи интерполирования по равностоящим узлам.");
             do
             {
-                Console.WriteLine("Введите параметр задачи:");
-                string str = Console.ReadLine();
-                result = Double.TryParse(str, out x);
+                string str;
+                do
+                {
+                    Console.WriteLine("Введите точку интерполирования в диапазоне [{0}; {1}] или [{2}; {3}] или [{4}; {5}]:"
+                        , table[0, 0], table[1, 0], table[m / 2, 0], table[m / 2 + 1, 0], table[m - 2, 0], table[m - 1, 0]);
+                    str = Console.ReadLine();
+                    result = Double.TryParse(str, out x);
+                } while (!((table[0, 0] <= x && x <= table[1, 0]) || (table[m / 2, 0] <= x && x <= table[m / 2 + 1, 0]) || (table[m - 2, 0] <= x && x <= table[m - 1, 0])));
 
                 if (result)
                 {
-                    FillingTable(table, true); // заполняем таблицу x_k -> f(x_k)
-                    Sorting(x, table);
-                    PrintTable(table);
-
-                    ChooseWay(table, x);
+                    double calc = CalculationOfValue(table, x);
+                    Console.WriteLine("Значение многочлена {0}:", calc);
+                    Console.WriteLine("Фактическая погрешность: {0}", Math.Abs(calc - f(x)));
                 }
                 else if (str != "exit")
                     result = true;
@@ -70,25 +75,44 @@
         }
 
         /// <summary>
+        /// Проверяем наличие введённого значения в таблицы, если нет, 
+        /// то вызываем метод, который займётся расчётами.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="choice"></param>
+        /// <returns></returns>
+        private double CalculationOfValue(double[,] table, double x)
+        {
+            for (int i = 0; i < m; i++)
+                if (table[i, 0] == x)
+                    return table[i, 1];
+
+            return ChooseWay(table, x);
+        }
+
+        /// <summary>
         /// Проверяем в какой промежуток попадает значение х.
         /// </summary>
         /// <param name="table"></param>
         /// <param name="x"></param>
-        private void ChooseWay(double[,] table, double x)
+        private double ChooseWay(double[,] table, double x)
         {
             double delta = ((n + 1) / 2 - 1) * h;
             if ((x >= table[0, 0]) && (x <= table[1, 0])) 
-                ValueInBegin(table, x);
+                return ValueInBegin(table, x);
             else
             {
                 if ((x >= a + delta) && (x <= b - delta)) 
-                    ValueInMiddle(table, x);
+                    return ValueInMiddle(table, x);
                 else
                 {
-                    if ((x >= table[m - 1, 0]) && (x <= table[m, 0])) 
-                        ValueInEnd(table, x);
-                    else 
+                    if ((x >= table[m - 2, 0]) && (x <= table[m - 1, 0]))
+                        return ValueInEnd(table, x);
+                    else
+                    {
                         Console.WriteLine("Невозможно интерполировать число {0} по равностоящим узлам.", x);
+                        return 0;
+                    }
                 }
             }
         }
@@ -98,7 +122,7 @@
         /// </summary>
         /// <param name="table"></param>
         /// <param name="x"></param>
-        private void ValueInBegin(double[,] table, double x)
+        private double ValueInBegin(double[,] table, double x)
         {
 	        double result = table[0, 1];
 	        double temp = (x - table[0, 0]) / h;
@@ -110,8 +134,7 @@
 		        multiplication *= (temp + 1 - i) / i;
 	        }
 
-            Console.WriteLine("Значение многочлена {0}:", result);
-	        Console.WriteLine("Фактическая погрешность: {0}", Math.Abs(result-f(x)));
+            return result;
         }
 
         private int FindZ(double[,] table, double x)
@@ -128,22 +151,24 @@
         /// </summary>
         /// <param name="table"></param>
         /// <param name="x"></param>
-        private void ValueInMiddle(double[,] table, double x)
+        private double ValueInMiddle(double[,] table, double x)
         {
 	        int z0 = FindZ(table, x);
 
+            double fact = 1;
 	        double result = table[z0, 1];
 	        double temp = (x - table[z0, 0]) / h;
 	        double multiplication = temp;
 
-	        for (int i = 2; i < n + 1; i++)
+	        for (int i = 1; i <= n; i++)    
 	        {
-		        result += table[z0 - (int)((i - 1) / 2) , i] * multiplication;
-		        multiplication *= (temp + Math.Pow(-1, i - 1) * ( (int)((i - 1) / 2) )) / i;
+		        result += table[z0 - (int)((i) / 2) , i + 1] * multiplication / fact;
+                fact *= i + 1;
+                multiplication *= i % 2 == 0 ? temp + ((i + 1) / 2) : temp - ((i + 1) / 2);
+		        //multiplication *= (temp + Math.Pow(-1, i) * ( (int)((i + 1) / 2) )) / (i + 1);
 	        }
 
-            Console.WriteLine("Значение многочлена {0}:", result);
-            Console.WriteLine("Фактическая погрешность: {0}", Math.Abs(result - f(x)));
+            return result;
         }
 
         /// <summary>
@@ -151,20 +176,19 @@
         /// </summary>
         /// <param name="table"></param>
         /// <param name="x"></param>
-        private void ValueInEnd(double[,] table, double x)
+        private double ValueInEnd(double[,] table, double x)
         {
-            double result = table[m, 1];
-            double temp = (x - table[m, 0]) / h;
+            double result = table[m - 1, 1];
+            double temp = (x - table[m - 1, 0]) / h;
             double multiplication = temp;
 
             for (int i = 2; i < n + 1; i++)
             {
-                result += table[m + 1 - i, i] * multiplication;
+                result += table[m - i, i] * multiplication;
                 multiplication *= (temp + i - 1) / i;
             }
 
-            Console.WriteLine("Значение многочлена {0}:", result);
-            Console.WriteLine("Фактическая погрешность: {0}", Math.Abs(result - f(x)));
+            return result;
         }
 
         /// <summary>
@@ -174,22 +198,6 @@
         {
             for (int i = 0; i < m; i++)
                 Console.WriteLine("{0:0.000}  {1:0.000}", table[i, 0], table[i, 1]);
-        }
-
-        /// <summary>
-        /// Проверяем наличие введённого значения в таблицы, если нет, 
-        /// то считем занчение методами Лагранжа и Ньютона.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="choice"></param>
-        /// <returns></returns>
-        private double CalculationOfValue(double x, double[,] table)
-        {
-            for (int i = 0; i < m; i++)
-                if (table[i, 0] == x)
-                    return table[i, 1];
-
-            return Lagrange(x, table);
         }
 
         /// <summary>
@@ -310,6 +318,5 @@
         private double[,] table;
         private double h;
         private int n;
-        private double epsilon = 0.00000001;
     }
 }
