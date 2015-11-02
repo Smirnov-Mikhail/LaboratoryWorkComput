@@ -29,10 +29,10 @@
                 n = Convert.ToInt32(Console.ReadLine());
             } while (n >= m || n <= 0);
             
-            Console.WriteLine("Таблица численного дифференцирования.");
+            //Console.WriteLine("Таблица численного дифференцирования.");
             FillingTable(true, table); // заполняем таблицу x_k -> f(x_k)
-            FillingTablePrOIZvodnAYA(table); // заполняем таблицу производных
-            PrintProiZvodNayaTable();
+            //FillingTablePrOIZvodnAYA(table); // заполняем таблицу производных
+            PrintTable(table);
 
             double x;
             bool result;
@@ -49,7 +49,6 @@
                     Sorting(x, table);
                     inverseTable = new double[m, m];
                     FillingTable(false, inverseTable); // заполняем таблицу f(x_k) -> x_k
-                    Sorting(x, inverseTable);
                     //PrintTable(inverseTable);
 
                     Console.WriteLine("Результаты решения задачи обратного интерполирования.");
@@ -63,25 +62,6 @@
                     result = true;
 
             } while (result);
-        }
-
-        /// <summary>
-        /// 2 способ решения (методом бисекции).
-        /// </summary>
-        /// <param name="F"></param>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <returns></returns>
-        private double WayTwo(double F, double left, double right, double[,] table, int count)
-        {
-            double ValueMid = Lagrange((right + left) / 2, table);
-            double ValueLeft = Lagrange(left, table);
-            if (Math.Abs(ValueMid - F) <= epsilon /*|| count == 6000*/)
-                return (right + left) / 2;
-            else if ((ValueLeft - F) * (ValueMid - F) < 0)
-                return WayTwo(F, left, (right + left) / 2, table, ++count);
-            else
-                return WayTwo(F, (right + left) / 2, right, table, ++count);
         }
 
         /// <summary>
@@ -108,7 +88,7 @@
         public void PrintTable(double[,] table)
         {
             for (int i = 0; i < m; i++)
-                Console.WriteLine("{0:0.000}  {1:0.000}", table[i, 0], table[i, 1]);
+                Console.WriteLine("{0:0.00000}  {1:0.00000}", table[i, 0], table[i, 1]);
         }
 
         /// <summary>
@@ -128,8 +108,6 @@
             for (int i = 0; i < m; i++)
                 Console.WriteLine("{0} {1}", table[i, 3], Math.Abs(fPrOIZvodnAYA2(table[i, 0]) - table[i, 3])); // f'' и погрешность.
             Console.WriteLine("______________________________________");
-                //, table[i, 2], Math.Abs(fPrOIZvodnAYA(table[i, 0]) - table[i, 2]) // f' и погрешность.
-                //, table[i, 3], Math.Abs(fPrOIZvodnAYA2(table[i, 0]) - table[i, 3])); // f'' и погрешность.
         }
 
         /// <summary>
@@ -148,7 +126,13 @@
             if (choice)
                 return Lagrange(x, table);
             else
-                return WayTwo(x, a, b, table, 1);
+            {
+                for (int i = 0; i < m - 1; ++i)
+     		        if ((table[i, 0] - x) * (table[i + 1, 0] - x) <= 0)
+                        return WayTwo(x, table[i, 0], table[i + 1, 0]);
+
+                return 0;
+            }
         }
 
         /// <summary>
@@ -159,11 +143,23 @@
         /// <returns></returns>
         private double Lagrange(double x, double[,] table)
         {
+            double result = 0; 
+         	double multy = 1; 
+         	for (int i = 0; i < n; ++i) { 
+         		for (int j = 0; j < n; ++j) { 
+         			if (i != j) 
+         				multy *= (x - table[j, 0])/(table[i, 0] - table[j, 0]); 
+         		} 
+         		result += table[i, 1] * multy; 
+         		multy = 1; 
+         	} 
+         	return result; 
+            /*
             double result = 0;
             for (int j = 0; j < n; j++)
                 result += table[j, 1] * Phi(x, j) / Phi(table[j, 0], j);
 
-            return result;
+            return result;*/
         }
 
         /// <summary>
@@ -329,6 +325,25 @@
         {
             return -4 * Math.Exp(-2 * x);
         }
+
+        private double WayTwo(double x, double start, double end) 
+        {
+            if (end - start < epsilon) 
+ 	            return start;
+
+            double mid = (start + end) / 2; 
+            if ((f(start) - x) * (f(mid) - x) < 0) { 
+ 	            return WayTwo(x, start, mid); 
+            } else { 
+ 	            if (f(start) == 0) { 
+ 		            return start; 
+ 	            } else if (f(end) == 0) { 
+ 		            return end; 
+ 	            } 
+ 	            return WayTwo(x, mid, end); 
+            } 
+        } 
+
 
         private int m;
         private double a;
