@@ -46,15 +46,16 @@
                 if (result)
                 {
                     FillingTable(true, table); // заполняем таблицу x_k -> f(x_k)
-                    Sorting(x, table);
+                    //Sorting(x, table);
                     inverseTable = new double[m, m];
                     FillingTable(false, inverseTable); // заполняем таблицу f(x_k) -> x_k
+                    Sorting(x, inverseTable);
                     //PrintTable(inverseTable);
 
                     Console.WriteLine("Результаты решения задачи обратного интерполирования.");
                     double calculate = CalculationOfValue(x, inverseTable, true);
                     Console.WriteLine("1 способ: {0}, модуль невязки: {1}", calculate, Math.Abs(f(calculate) - x));
-                    calculate = CalculationOfValue(x, inverseTable, false);
+                    calculate = CalculationOfValue(x, table, false);
                     Console.WriteLine("2 способ: {0}, модуль невязки: {1}", calculate, Math.Abs(f(calculate) - x));
                     Console.WriteLine();
                 }
@@ -128,8 +129,8 @@
             else
             {
                 for (int i = 0; i < m - 1; ++i)
-     		        if ((table[i, 0] - x) * (table[i + 1, 0] - x) <= 0)
-                        return WayTwo(x, table[i, 0], table[i + 1, 0]);
+                    if ((table[i, 1] - x) * (table[i + 1, 1] - x) <= 0)
+                        return WayTwo(x, table[i, 0], table[i + 1, 0], table);
 
                 return 0;
             }
@@ -145,7 +146,7 @@
         {
             double result = 0; 
          	double multy = 1; 
-         	for (int i = 0; i < n; ++i) { 
+         	for (int i = 0; i < n; ++i) {
          		for (int j = 0; j < n; ++j) { 
          			if (i != j) 
          				multy *= (x - table[j, 0])/(table[i, 0] - table[j, 0]); 
@@ -326,21 +327,22 @@
             return -4 * Math.Exp(-2 * x);
         }
 
-        private double WayTwo(double x, double start, double end) 
+        private double WayTwo(double x, double start, double end, double[,] table) 
         {
-            if (end - start < epsilon) 
- 	            return start;
+            if (end - start < epsilon)
+                return start;
 
-            double mid = (start + end) / 2; 
-            if ((f(start) - x) * (f(mid) - x) < 0) { 
- 	            return WayTwo(x, start, mid); 
-            } else { 
- 	            if (f(start) == 0) { 
- 		            return start; 
- 	            } else if (f(end) == 0) { 
- 		            return end; 
- 	            } 
- 	            return WayTwo(x, mid, end); 
+            double mid = (start + end) / 2;
+            if ((Lagrange(start, table) - x) * (Lagrange(mid, table) - x) < 0)
+                return WayTwo(x, start, mid, table); 
+            else 
+            {
+                if (Lagrange(start, table) == 0)
+                    return start;
+                else if (Lagrange(end, table) == 0)
+                    return end; 
+
+                return WayTwo(x, mid, end, table); 
             } 
         } 
 
@@ -352,6 +354,6 @@
         private double[,] inverseTable;
         private double h;
         private int n;
-        private double epsilon = 0.00000001;
+        private double epsilon = 0.00000000001;
     }
 }
